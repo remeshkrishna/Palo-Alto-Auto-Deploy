@@ -1,0 +1,8 @@
+---
+
+  ansible_vars:
+    - { vcd_org: '{{ vcd_org }}', vcd_vdc: '{{ vcd_vdc }}', vcd_url: '{{ vcd_url }}', vm_name: '{{ vm_name }}', secret_path: '{{ secret_path }}', working_directory: '{{ working_directory }}', catalog_org: '{{ catalog_org }}', catalog_name: '{{ catalog_name }}' }
+  management_vars:
+    - { man_ip: '{{ man_ip }}', man_subnet: '{{ man_subnet }}', man_gw: '{{ man_gw }}', man_cidr: '{{ man_cidr }}' }
+  firewall_vars:
+    - { u_account_id: '{{ u_account_id }}', Palo_Ver: '{{ palo_ver }}', man_ip: '{{ man_ip }}', man_subnet: '{{ man_subnet }}', man_gw: '{{ man_gw }}', man_cidr: '{{ man_cidr }}', Time_Zone: '{{ time_zone }}', Site_Code: '{{ site_code }}', Location: '{{ location }}', Palo_Untrust_IP: '{{ inet_ip }}', Palo_Untrust_CIDR: '{{ inet_cidr }}', Palo_Untrust_GW: '{{ inet_gw }}', Palo_Untrust_VLAN: '{{ inet_vlan }}', Palo_Untrust_INT: 'ethernet1/1', Palo_Trust_Subnet: '10.0.0.0/24', Palo_Trust_VLAN: '{{ int_vlan }}', Palo_Trust_INT: 'ethernet1/2', Palo_DMZ_Subnet: '172.16.1.0/24', Palo_DMZ_VLAN: '{{ dmz_vlan }}', Palo_DMZ_INT: 'ethernet1/3', Palo_DNS_Servers: ['8.8.8.8','4.4.8.8'], Palo_SNMP_Contact: 'DC Network', Palo_SNMP_Community: 'invdcmon' }

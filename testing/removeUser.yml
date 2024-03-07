@@ -1,0 +1,24 @@
+---
+- name: Deploy Palo Alto Firewall
+  hosts: localhost
+  gather_facts: no
+
+  collections:
+    - paloaltonetworks.panos
+
+  tasks:
+    - name: remove PA administrator
+      paloaltonetworks.panos.panos_administrator:
+        provider:
+          ip_address: '{{ manip }}'
+          password: '{{ inputPass }}'
+          username: 'invadmin'
+        admin_username: 'admin'                  
+        state: absent
+
+    - name: commit config
+      panos_commit_firewall:
+        provider:
+          ip_address: '{{ manip }}'
+          password: '{{ inputPass }}'
+          username: 'invadmin'     

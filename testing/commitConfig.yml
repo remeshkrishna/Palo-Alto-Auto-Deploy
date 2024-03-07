@@ -1,0 +1,99 @@
+---
+- name: Deploy Palo Alto Firewall
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ansible_vars:
+      vcd_org: '{{ vcdorg }}'
+      vcd_vdc: '{{ vcdvdc }}'
+      vcd_url: '{{ vcdurl }}'
+      vm_name: '{{ vmname }}'
+      man_ip: '{{ manip }}'
+    provider:
+      ip_address: '{{ item.man_ip }}'
+      username: '{{ palo_username }}'
+      password: '{{ palo_password }}'
+  pre_tasks:
+    - name: Retrieve secrets from HashiCorp Vault
+      set_fact:
+        vcd_api: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=kv/data/' + APIRecordID + ':api', url=lookup('env', 'VAULT_URL') | default(PP_URL, true), token=lookup('env', 'VAULT_TOKEN') | default(API_Password, true)) }}"
+        vcd_auth: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=kv/data/' + AuthRecordID + ':auth', url=lookup('env', 'VAULT_URL') | default(PP_URL, true), token=lookup('env', 'VAULT_TOKEN') | default(API_Password, true)) }}"
+
+  collections:
+    - paloaltonetworks.panos
+
+  tasks:
+    - name: Get VCD Auth Session
+      uri:
+        url: "https://{{ item.vcd_url }}/api/sessions"
+        force_basic_auth: yes
+        headers:
+          Accept: "application/*+json;version=37.1"
+          Authorization: "{{ vcd_auth }}"          
+        method: POST
+        validate_certs: no
+        status_code: "200"
+      with_items: 
+        - "{{ ansible_vars }}"
+      register: resp
+    
+    - name: Set vcloud token
+      set_fact:
+        vcloud_authorization: "{{ resp.results[0].x_vcloud_authorization }}"
+    
+    - name: Get VAPP
+      uri:
+        url: "https://{{ item.vcd_url }}/api/admin/extension/vapps/query?filter=name=={{ item.vm_name }}"
+        headers:
+          Accept: "application/*+json;version=37.1"
+          x-vcloud-authorization: "{{ vcloud_authorization }}"
+        method: GET
+        validate_certs: no
+        status_code: "200"
+      with_items: 
+        - "{{ ansible_vars }}"
+      register: resp_vapp
+    #- name: debug registered variable
+    #  debug: msg="{{ resp_vapp }}"
+    
+    - name: Set vapp href
+      set_fact:
+        vapp_href: "{{ resp_vapp.results[0].json.record[0].href }}"  
+
+    - name: create random but idempotent password
+      ansible.builtin.set_fact:
+        random_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=12, seed=vcloud_authorization) }}"
+    
+    - name: admin password     
+      debug: msg="{{ random_password }}"
+
+    - name: configure inv administrator
+      panos_administrator:
+        provider: '{{ provider }}'
+        admin_username: 'inv_admin'
+        admin_password: '{{ random_password }}'
+        superuser: true
+      with_items: 
+        - "{{ ansible_vars }}"
+        
+    - name: create random but idempotent password
+      ansible.builtin.set_fact:
+        random_lm_password: "{{ lookup('ansible.builtin.password', '/dev/null', length=14, seed=vcloud_authorization) }}"
+    
+    - name: Logic Monitor password     
+      debug: msg="{{ random_lm_password }}"
+
+    - name: configure LM user
+      panos_administrator:
+        provider: '{{ provider }}'           
+        admin_username: 'monitor'
+        admin_password: '{{ random_lm_password }}'
+        superuser_read_only: true     
+      with_items: 
+        - "{{ ansible_vars }}"
+
+    - name: commit config
+      panos_commit_firewall:
+        provider: '{{ provider }}'
+      with_items: 
+        - "{{ ansible_vars }}"        

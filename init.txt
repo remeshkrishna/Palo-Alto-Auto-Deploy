@@ -1,0 +1,6 @@
+type=static
+ip-address={{ item.man_ip }}
+default-gateway={{ item.man_gw }}
+netmask={{ item.man_subnet }}
+dns-primary={{ item.man_dns1 }}
+dns-secondary={{ item.man_dns2 }}

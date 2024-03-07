@@ -1,0 +1,51 @@
+---
+- name: Get Management IP
+  gather_facts: no
+  hosts: localhost
+  tasks:
+    - name: "Get an API Token"
+      uri:
+        method: POST
+        url: "{{ ipam_url }}/api/{{ appID }}/user"
+        validate_certs: no
+        headers:
+          Authorization: "{{ ipam_auth }}"     
+        # force_basic_auth: true
+      register: token
+
+    - name: "Get Subnets"
+      uri:
+        method: GET
+        url: "{{ ipam_url }}/api/{{ appID }}/Subnets/search/{{ ipam_IP_subnet }}/{{ ipam_IP_CIDR }}"
+        validate_certs: no
+        headers:
+          token: "{{ token.json.data.token }}"
+      register: SN_ID
+
+    - name: "Get Subnet ID"
+      set_fact: 
+        SN_ID_1: "{{ item.id }}"
+      with_items: "{{ SN_ID.json.data }}"
+      when:
+        - item.subnet == ipam_IP_subnet
+        - item.mask | int == ipam_IP_CIDR | int
+
+    - name: "Set IP Address"
+      uri:
+        method: POST
+        url: "{{ ipam_url }}/api/{{ appID }}/addresses/first_free/{{ SN_ID_1 }}"
+        validate_certs: no
+        headers:
+          token: "{{ token.json.data.token }}"
+        body_format: form-urlencoded
+        body:
+          hostname: "{{ u_account_id }}"
+          description: "FWaaS"
+        status_code: 201
+      register: results
+
+    - name: IPAM Address
+      set_fact: 
+        IPAM_Addr: "man_ip={{ results.json.data }}"
+    - debug:
+        var: "IPAM_Addr"
