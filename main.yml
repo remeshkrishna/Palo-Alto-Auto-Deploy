@@ -62,8 +62,8 @@
   pre_tasks:
     - name: Retrieve secrets from HashiCorp Vault
       set_fact:
-        vcd_api: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=kv/data/' + APIRecordID + ':api', url=lookup('env', 'VAULT_URL') | default(PP_URL, true), token=lookup('env', 'VAULT_TOKEN') | default(API_Password, true)) }}"
-        vcd_auth: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=kv/data/' + AuthRecordID + ':auth', url=lookup('env', 'VAULT_URL') | default(PP_URL, true), token=lookup('env', 'VAULT_TOKEN') | default(API_Password, true)) }}"
+        vcd_api: "{{ VCD_Api}}"
+        vcd_auth: "{{ VCD_Auth}}"
 
   collections:
     - paloaltonetworks.panos
